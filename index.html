@@ -17,7 +17,15 @@
       <h2 id="search-heading">Tankstelle finden</h2>
       <form>
         <label for="location">Ort oder Postleitzahl</label>
-        <input id="location" name="location" type="search" placeholder="z. B. Karlsruhe" autocomplete="postal-code">
+        <input id="location" name="location" type="search" placeholder="z. B. Karlsruhe" autocomplete="postal-code" required>
+
+        <label for="fuel-type">Kraftstoff</label>
+        <select id="fuel-type" name="fuel-type">
+          <option value="e5">Super E5</option>
+          <option value="e10">Super E10</option>
+          <option value="diesel">Diesel</option>
+        </select>
+
         <button type="submit">Suchen</button>
       </form>
     </section>
