@@ -15,7 +15,7 @@
   <main>
     <section aria-labelledby="search-heading">
       <h2 id="search-heading">Tankstelle finden</h2>
-      <form>
+      <form id="station-search">
         <label for="location">Ort oder Postleitzahl</label>
         <input id="location" name="location" type="search" placeholder="z. B. Karlsruhe" autocomplete="postal-code" required>
 
@@ -32,8 +32,23 @@
 
     <section aria-labelledby="results-heading">
       <h2 id="results-heading">Tankstellen in der Nähe</h2>
-      <p>Noch keine Tankstellen geladen.</p>
+      <p id="search-status" role="status" aria-live="polite">Noch keine Tankstellen geladen.</p>
     </section>
   </main>
+  <script>
+    const form = document.querySelector('#station-search');
+    const status = document.querySelector('#search-status');
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const location = form.elements.location.value.trim();
+      if (!location) {
+        status.textContent = 'Bitte einen Ort oder eine Postleitzahl eingeben.';
+        return;
+      }
+      const fuel = form.elements['fuel-type'].selectedOptions[0].textContent;
+      status.textContent = `Suche nach ${fuel}-Preisen in ${location} ist noch nicht verfügbar. Die Datenanbindung folgt.`;
+    });
+  </script>
 </body>
 </html>
