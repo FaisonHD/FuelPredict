@@ -27,6 +27,14 @@
           <option value="diesel">Diesel</option>
         </select>
 
+        <label for="radius">Suchradius</label>
+        <select id="radius" name="radius">
+          <option value="5">5 km</option>
+          <option value="10" selected>10 km</option>
+          <option value="20">20 km</option>
+          <option value="50">50 km</option>
+        </select>
+
         <button type="submit">Suchen</button>
       </form>
     </section>
@@ -48,7 +56,8 @@
         return;
       }
       const fuel = form.elements['fuel-type'].selectedOptions[0].textContent;
-      status.textContent = `Suche nach ${fuel}-Preisen in ${location} ist noch nicht verfügbar. Die Datenanbindung folgt.`;
+      const radius = form.elements.radius.value;
+      status.textContent = `Suche nach ${fuel}-Preisen im Umkreis von ${radius} km um ${location} ist noch nicht verfügbar. Die Datenanbindung folgt.`;
     });
   </script>
 </body>
