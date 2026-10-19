@@ -36,6 +36,7 @@
         </select>
 
         <button type="submit">Suchen</button>
+        <button type="reset">Zurücksetzen</button>
       </form>
     </section>
 
@@ -47,6 +48,10 @@
   <script>
     const form = document.querySelector('#station-search');
     const status = document.querySelector('#search-status');
+
+    form.addEventListener('reset', () => {
+      status.textContent = 'Noch keine Tankstellen geladen.';
+    });
 
     form.addEventListener('submit', (event) => {
       event.preventDefault();
