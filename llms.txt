@@ -1,0 +1,10 @@
+# FuelPredict
+
+> FuelPredict ist eine Webanwendung zur Suche nach Tankstellen und zur geplanten Analyse und Vorhersage von Kraftstoffpreisen.
+
+Die Startseite enthält derzeit ein Suchformular für Ort, Kraftstoffart und Radius. Eine echte Tankstellendatenanbindung und Preisprognosen sind noch nicht implementiert.
+
+## Projekt
+
+- [Quellcode und README](https://github.com/FaisonHD/FuelPredict)
+- [Startseite im Quellcode](https://github.com/FaisonHD/FuelPredict/blob/main/index.html)
