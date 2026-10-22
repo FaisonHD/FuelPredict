@@ -22,7 +22,7 @@
   <header>
     <h1>FuelPredict</h1>
     <p>Tankpreise vergleichen und Preisentwicklungen im Blick behalten.</p>
-    <nav aria-label="Seitennavigation"><a href="#station-search">Zur Tankstellensuche</a></nav>
+    <nav aria-label="Seitennavigation"><a href="#station-search">Zur Tankstellensuche</a> · <a href="#about">Über das Projekt</a></nav>
   </header>
 
   <main>
@@ -30,7 +30,7 @@
       <h2 id="search-heading">Tankstelle finden</h2>
       <form id="station-search">
         <label for="location">Ort oder Postleitzahl</label>
-        <input id="location" name="location" type="search" placeholder="z. B. Karlsruhe" autocomplete="postal-code" required>
+        <input id="location" name="location" type="search" minlength="2" placeholder="z. B. Karlsruhe" autocomplete="postal-code" required>
 
         <label for="fuel-type">Kraftstoff</label>
         <select id="fuel-type" name="fuel-type">
@@ -44,7 +44,7 @@
           <option value="5">5 km</option>
           <option value="10" selected>10 km</option>
           <option value="20">20 km</option>
-          <option value="50">50 km</option>
+          <option value="25">25 km</option>
         </select>
 
         <button type="submit">Suchen</button>
@@ -56,7 +56,9 @@
       <h2 id="results-heading">Tankstellen in der Nähe</h2>
       <p id="search-status" role="status" aria-live="polite">Noch keine Tankstellen geladen.</p>
     </section>
+    <section id="about" aria-labelledby="about-heading"><h2 id="about-heading">Über FuelPredict</h2><p>FuelPredict ist ein Einzelprojekt. Als Datenquelle ist Tankerkönig geplant; die Live-Anbindung folgt.</p></section>
   </main>
+  <footer><p>FuelPredict · Datenquelle geplant: <a href="https://creativecommons.tankerkoenig.de/">Tankerkönig</a></p></footer>
   <script>
     const form = document.querySelector('#station-search');
     const status = document.querySelector('#search-status');
