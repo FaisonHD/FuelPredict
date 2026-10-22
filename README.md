@@ -34,4 +34,4 @@ Die Datei `llms.txt` beschreibt das Projekt. In `index.html` sind strukturierte 
 
 Am 22.10.2026 hat der Google Rich Results Test ein gültiges Software-App-Element erkannt. Es wurden keine kritischen Probleme festgestellt.
 
-![Google Rich Results Test](docs/rich-results-test.png)
+![Google Rich Results Test](docs/richtest.png)
