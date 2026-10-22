@@ -35,3 +35,30 @@ Die Datei `llms.txt` beschreibt das Projekt. In `index.html` sind strukturierte 
 Am 22.10.2026 hat der Google Rich Results Test ein gültiges Software-App-Element erkannt. Es wurden keine kritischen Probleme festgestellt.
 
 ![Google Rich Results Test](docs/richtest.png)
+
+## Gestaltung
+
+Die Oberfläche verwendet eine gemeinsame Farbpalette, abgerundete Karten und ein responsives Raster. Navigation und Aktionsleiste nutzen Flexbox, die Seitenaufteilung CSS Grid. Ab 768 px werden die Inhalte zweispaltig dargestellt.
+
+Wiederverwendete Bausteine:
+- **Buttons:** Suche und Zurücksetzen im Formular (`.btn`).
+- **Karten:** Suche, Ergebnisse und Infobereiche (`.card`).
+- **Navigation:** Links im Kopfbereich (`nav a`).
+
+### CSS und Tailwind
+
+Unter „Karten im Vergleich“ stehen eine mit `.compare-card` gestaltete Karte und eine Karte mit Tailwind-Utilities. Beispielsweise entsprechen `p-4` dem Innenabstand, `rounded-xl` den abgerundeten Ecken und `border` dem Rahmen.
+
+### CSS-Kaskade
+
+Die Regeln `nav a` und `nav a:hover` treffen beim Darüberfahren denselben Link. `nav a:hover` gewinnt aufgrund der höheren Spezifität (0-1-2 gegenüber 0-0-2).
+
+## Entwicklung
+
+```bash
+npm install
+npm run dev
+npm run build
+```
+
+Vite erstellt beim Build den Ordner `dist/` mit den für die Veröffentlichung benötigten Dateien. `node_modules/` und `dist/` sind in `.gitignore` eingetragen. Die Styles werden mit Tailwind CSS 4 und dem Vite-Plugin erzeugt; nur verwendete Utility-Klassen werden in die gebaute CSS-Datei übernommen.
