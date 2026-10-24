@@ -46,15 +46,39 @@
 </main>
 <footer><p>FuelPredict · Datenquelle: <a href="https://creativecommons.tankerkoenig.de/">Tankerkönig</a></p></footer>
 <script>
-const form=document.querySelector('#station-search');
-const status=document.querySelector('#search-status');
-form.addEventListener('reset',()=>{status.textContent='Noch keine Tankstellen geladen.';});
-form.addEventListener('submit',event=>{
+const form = document.querySelector('#station-search');
+const status = document.querySelector('#search-status');
+const mapsLink = document.createElement('a');
+mapsLink.className = 'btn btn-secondary';
+mapsLink.textContent = 'Tankstellen auf Google Maps anzeigen';
+mapsLink.target = '_blank';
+mapsLink.rel = 'noopener noreferrer';
+mapsLink.hidden = true;
+status.after(mapsLink);
+
+form.addEventListener('reset', () => {
+  status.textContent = 'Noch keine Tankstellen geladen.';
+  mapsLink.hidden = true;
+  mapsLink.removeAttribute('href');
+});
+
+form.addEventListener('submit', event => {
   event.preventDefault();
-  const location=form.elements.location.value.trim();
-  const fuel=form.elements['fuel-type'].selectedOptions[0].textContent;
-  const radius=form.elements.radius.value;
-  status.textContent=`Die Suche nach ${fuel} im Umkreis von ${radius} km um ${location} ist noch nicht verfügbar. Die Datenanbindung folgt.`;
+  const location = form.elements.location.value.trim();
+  if (location.length < 2) {
+    mapsLink.hidden = true;
+    mapsLink.removeAttribute('href');
+    status.textContent = 'Bitte mindestens zwei Zeichen für den Ort eingeben.';
+    return;
+  }
+
+  const fuel = form.elements['fuel-type'].selectedOptions[0].textContent;
+  const radius = form.elements.radius.value;
+  mapsLink.href = 'https://www.google.com/maps/search/?api=1&query=' +
+    encodeURIComponent('Tankstelle ' + location);
+  mapsLink.hidden = false;
+  status.textContent = 'Tankstellen bei ' + location + ' auf Google Maps suchen. ' +
+    fuel + ', ' + radius + ' km Suchradius und Live-Preise werden dort nicht automatisch gefiltert.';
 });
 </script>
 </body>
