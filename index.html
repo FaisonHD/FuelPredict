@@ -24,7 +24,7 @@
       <select id="fuel-type" name="fuel-type"><option value="e5">Super E5</option><option value="e10">Super E10</option><option value="diesel">Diesel</option></select>
       <label for="radius">Suchradius</label>
       <select id="radius" name="radius"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="20">20 km</option><option value="25">25 km</option></select>
-      <div class="actions"><button class="btn btn-primary" type="submit">Suchen</button><button class="btn btn-secondary" type="reset">Zurücksetzen</button></div>
+      <div class="actions"><button class="btn btn-primary" type="submit">Suchen</button><button class="btn btn-secondary" id="nearby-search" type="button">Meinen Standort verwenden</button><button class="btn btn-secondary" type="reset">Zurücksetzen</button></div>
     </form>
   </section>
   <section class="card result-card" aria-labelledby="results-heading">
@@ -48,6 +48,7 @@
 <script>
 const form = document.querySelector('#station-search');
 const status = document.querySelector('#search-status');
+const nearbyButton = document.querySelector('#nearby-search');
 const mapsLink = document.createElement('a');
 mapsLink.className = 'btn btn-secondary';
 mapsLink.textContent = 'Tankstellen auf Google Maps anzeigen';
@@ -56,29 +57,79 @@ mapsLink.rel = 'noopener noreferrer';
 mapsLink.hidden = true;
 status.after(mapsLink);
 
-form.addEventListener('reset', () => {
-  status.textContent = 'Noch keine Tankstellen geladen.';
+let locationRequestId = 0;
+function hideMapsLink() {
   mapsLink.hidden = true;
   mapsLink.removeAttribute('href');
+}
+
+function showMapsLink(query, message) {
+  mapsLink.href = 'https://www.google.com/maps/search/?api=1&query=' +
+    encodeURIComponent(query);
+  mapsLink.hidden = false;
+  status.textContent = message;
+}
+
+function cancelLocationRequest() {
+  locationRequestId++;
+  nearbyButton.disabled = false;
+}
+
+form.addEventListener('reset', () => {
+  cancelLocationRequest();
+  status.textContent = 'Noch keine Tankstellen geladen.';
+  hideMapsLink();
 });
 
 form.addEventListener('submit', event => {
   event.preventDefault();
+  cancelLocationRequest();
   const location = form.elements.location.value.trim();
   if (location.length < 2) {
-    mapsLink.hidden = true;
-    mapsLink.removeAttribute('href');
+    hideMapsLink();
     status.textContent = 'Bitte mindestens zwei Zeichen für den Ort eingeben.';
     return;
   }
 
   const fuel = form.elements['fuel-type'].selectedOptions[0].textContent;
   const radius = form.elements.radius.value;
-  mapsLink.href = 'https://www.google.com/maps/search/?api=1&query=' +
-    encodeURIComponent('Tankstelle ' + location);
-  mapsLink.hidden = false;
-  status.textContent = 'Tankstellen bei ' + location + ' auf Google Maps suchen. ' +
-    fuel + ', ' + radius + ' km Suchradius und Live-Preise werden dort nicht automatisch gefiltert.';
+  showMapsLink('Tankstelle ' + location,
+    'Tankstellen bei ' + location + ' auf Google Maps suchen. ' +
+    fuel + ', ' + radius + ' km Suchradius und Live-Preise werden dort nicht automatisch gefiltert.');
+});
+
+nearbyButton.addEventListener('click', () => {
+  hideMapsLink();
+  if (!navigator.geolocation) {
+    status.textContent = 'Dein Browser unterstützt keine Standortbestimmung.';
+    return;
+  }
+
+  const requestId = ++locationRequestId;
+  nearbyButton.disabled = true;
+  status.textContent = 'Standort wird ermittelt …';
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      if (requestId !== locationRequestId) return;
+      nearbyButton.disabled = false;
+      const { latitude, longitude } = position.coords;
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        status.textContent = 'Der Standort konnte nicht ausgewertet werden.';
+        return;
+      }
+      showMapsLink('Tankstelle ' + latitude + ',' + longitude,
+        'Standort ermittelt. Öffne Google Maps, um Tankstellen in deiner Nähe zu suchen. ' +
+        'Kraftstoffart, Radius und Live-Preise werden dort nicht automatisch gefiltert.');
+    },
+    error => {
+      if (requestId !== locationRequestId) return;
+      nearbyButton.disabled = false;
+      status.textContent = error.code === 1
+        ? 'Standortzugriff verweigert. Du kannst stattdessen einen Ort eingeben.'
+        : 'Standort konnte nicht ermittelt werden. Bitte einen Ort eingeben oder erneut versuchen.';
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+  );
 });
 </script>
 </body>
