@@ -59,9 +59,29 @@ GitHub Pages: https://faisonhd.github.io/FuelPredict/
 
 Die Veröffentlichung erfolgt automatisch über GitHub Actions nach einem Push auf `main`. Für die erstmalige Aktivierung muss unter **Settings → Pages → Build and deployment** die Quelle **GitHub Actions** ausgewählt sein.
 
+### Browser-Tests
+
+Die veröffentlichte Version wurde im Browser mit Lighthouse und dem Network-Tab geprüft.
+
+| Lighthouse-Kategorie | Ergebnis |
+| --- | ---: |
+| Leistung | 100/100 |
+| Barrierefreiheit | 96/100 |
+| Best Practices | 100/100 |
+| SEO | 90/100 |
+| Agentisches Browsing | 2/2 |
+
+Damit ist die geforderte Barrierefreiheitsbewertung von mindestens 90 Punkten erreicht.
+
+![Lighthouse-Ergebnis](docs/lighthouse.png)
+
+Im Network-Tab waren beim dokumentierten Seitenaufruf keine HTTP-Fehler (4xx oder 5xx) sichtbar. Das HTML-Dokument antwortete mit 304 (nicht verändert), JavaScript und CSS mit 200 (OK).
+
+![Network-Tab](docs/network.png)
+
 ### Lokal und live prüfen
 
-Nach dem ersten erfolgreichen Deployment die lokale und die veröffentlichte Version nebeneinander öffnen und im Browser unter **DevTools → Network** auf fehlgeschlagene Requests prüfen. Drei konkrete Beobachtungen und ihre Ursachen hier ergänzen, sobald beide Versionen getestet wurden.
+Der Live-Test bestätigt, dass HTML, JavaScript und CSS unter dem GitHub-Pages-Projektpfad geladen werden. Ein vollständiger visueller Vergleich mit der lokalen Version ist noch nicht dokumentiert.
 
 ## Entwicklung
 
