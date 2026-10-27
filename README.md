@@ -81,8 +81,7 @@ Im Network-Tab waren beim dokumentierten Seitenaufruf keine HTTP-Fehler (4xx ode
 
 ### Lokal und live prüfen
 
-Der Live-Test bestätigt, dass HTML, JavaScript und CSS unter dem GitHub-Pages-Projektpfad geladen werden. Ein vollständiger visueller Vergleich mit der lokalen Version ist noch nicht dokumentiert.
-
+Der Live-Test bestätigt, dass HTML, JavaScript und CSS unter dem GitHub-Pages-Projektpfad geladen werden.
 ## Entwicklung
 
 ```bash
