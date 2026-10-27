@@ -3,7 +3,7 @@ const TTL = 65_000;
 let lastRequest = 0;
 
 async function geocode(location) {
-  if (/^\\d{5}$/.test(location)) {
+  if (/^\d{5}$/.test(location)) {
     const response = await fetch('https://api.zippopotam.us/de/' + location);
     if (response.ok) {
       const data = await response.json();
