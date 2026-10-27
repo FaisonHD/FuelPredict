@@ -28,13 +28,13 @@
     </form>
   </section>
   <section class="card result-card" aria-labelledby="results-heading">
-    <span class="badge">Vorschau</span>
+    <span class="badge">Live-Daten</span>
     <h2 id="results-heading">Tankstellen in der Nähe</h2>
-    <p id="search-status" role="status" aria-live="polite">Noch keine Tankstellen geladen.</p>
+    <p id="search-status" role="status" aria-live="polite">Noch keine Tankstellen geladen.</p><div id="station-results" class="station-results"></div>
   </section>
   <section class="card wide" id="about" aria-labelledby="about-heading">
     <h2 id="about-heading">Über FuelPredict</h2>
-    <p>FuelPredict ist ein Einzelprojekt. Als Datenquelle ist Tankerkönig vorgesehen.</p>
+    <p>FuelPredict ist ein Einzelprojekt. Die aktuellen Tankstellen und Kraftstoffpreise stammen von Tankerkönig.</p>
   </section>
   <section class="card wide" aria-labelledby="compare-heading">
     <h2 id="compare-heading">Karten im Vergleich</h2>
@@ -48,87 +48,75 @@
 <script>
 const form = document.querySelector('#station-search');
 const status = document.querySelector('#search-status');
+const results = document.querySelector('#station-results');
 const nearbyButton = document.querySelector('#nearby-search');
-const mapsLink = document.createElement('a');
-mapsLink.className = 'btn btn-secondary';
-mapsLink.textContent = 'Tankstellen auf Google Maps anzeigen';
-mapsLink.target = '_blank';
-mapsLink.rel = 'noopener noreferrer';
-mapsLink.hidden = true;
-status.after(mapsLink);
+let requestId = 0;
 
-let locationRequestId = 0;
-function hideMapsLink() {
-  mapsLink.hidden = true;
-  mapsLink.removeAttribute('href');
+function clearResults() {
+  results.replaceChildren();
 }
 
-function showMapsLink(query, message) {
-  mapsLink.href = 'https://www.google.com/maps/search/?api=1&query=' +
-    encodeURIComponent(query);
-  mapsLink.hidden = false;
-  status.textContent = message;
+async function search(params) {
+  const id = ++requestId;
+  clearResults();
+  status.textContent = 'Tankstellen werden gesucht …';
+  const url = new URL('/api/stations', window.location.origin);
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (id !== requestId) return;
+    if (!response.ok) throw new Error(data.error || 'Suche fehlgeschlagen.');
+    const stations = data.stations || [];
+    status.textContent = stations.length
+      ? stations.length + ' Tankstellen gefunden · Preise von Tankerkönig'
+      : 'Keine Tankstellen im gewählten Radius gefunden.';
+    for (const station of stations) {
+      const article = document.createElement('article');
+      article.className = 'station-item';
+      const title = document.createElement('h3');
+      title.textContent = station.name || station.brand || 'Tankstelle';
+      const address = document.createElement('p');
+      address.textContent = [station.street, station.houseNumber, station.postCode, station.place].filter(Boolean).join(' ');
+      const info = document.createElement('p');
+      const price = Number(station.price);
+      info.textContent = (Number.isFinite(price) && price > 0 ? price.toFixed(3).replace('.', ',') + ' €/l' : 'Kein Preis verfügbar')
+        + ' · ' + (Number(station.dist) || 0).toFixed(1).replace('.', ',') + ' km'
+        + ' · ' + (station.isOpen ? 'Geöffnet' : 'Geschlossen');
+      article.append(title, address, info);
+      results.append(article);
+    }
+  } catch (error) {
+    if (id === requestId) status.textContent = error.message;
+  }
 }
-
-function cancelLocationRequest() {
-  locationRequestId++;
-  nearbyButton.disabled = false;
-}
-
-form.addEventListener('reset', () => {
-  cancelLocationRequest();
-  status.textContent = 'Noch keine Tankstellen geladen.';
-  hideMapsLink();
-});
 
 form.addEventListener('submit', event => {
   event.preventDefault();
-  cancelLocationRequest();
   const location = form.elements.location.value.trim();
-  if (location.length < 2) {
-    hideMapsLink();
-    status.textContent = 'Bitte mindestens zwei Zeichen für den Ort eingeben.';
-    return;
-  }
+  if (location.length < 2) return;
+  search({ location, fuel: form.elements['fuel-type'].value, radius: form.elements.radius.value });
+});
 
-  const fuel = form.elements['fuel-type'].selectedOptions[0].textContent;
-  const radius = form.elements.radius.value;
-  showMapsLink('Tankstelle ' + location,
-    'Tankstellen bei ' + location + ' auf Google Maps suchen. ' +
-    fuel + ', ' + radius + ' km Suchradius und Live-Preise werden dort nicht automatisch gefiltert.');
+form.addEventListener('reset', () => {
+  ++requestId;
+  clearResults();
+  status.textContent = 'Noch keine Tankstellen geladen.';
 });
 
 nearbyButton.addEventListener('click', () => {
-  hideMapsLink();
   if (!navigator.geolocation) {
     status.textContent = 'Dein Browser unterstützt keine Standortbestimmung.';
     return;
   }
-
-  const requestId = ++locationRequestId;
-  nearbyButton.disabled = true;
   status.textContent = 'Standort wird ermittelt …';
   navigator.geolocation.getCurrentPosition(
-    position => {
-      if (requestId !== locationRequestId) return;
-      nearbyButton.disabled = false;
-      const { latitude, longitude } = position.coords;
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        status.textContent = 'Der Standort konnte nicht ausgewertet werden.';
-        return;
-      }
-      showMapsLink('Tankstelle ' + latitude + ',' + longitude,
-        'Standort ermittelt. Öffne Google Maps, um Tankstellen in deiner Nähe zu suchen. ' +
-        'Kraftstoffart, Radius und Live-Preise werden dort nicht automatisch gefiltert.');
-    },
-    error => {
-      if (requestId !== locationRequestId) return;
-      nearbyButton.disabled = false;
-      status.textContent = error.code === 1
-        ? 'Standortzugriff verweigert. Du kannst stattdessen einen Ort eingeben.'
-        : 'Standort konnte nicht ermittelt werden. Bitte einen Ort eingeben oder erneut versuchen.';
-    },
-    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    ({ coords }) => search({
+      lat: coords.latitude, lng: coords.longitude,
+      fuel: form.elements['fuel-type'].value, radius: form.elements.radius.value
+    }),
+    () => { status.textContent = 'Standort nicht verfügbar. Bitte einen Ort eingeben.'; },
+    { timeout: 10000, maximumAge: 60000 }
   );
 });
 </script>
