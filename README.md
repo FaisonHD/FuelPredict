@@ -53,6 +53,16 @@ Unter „Karten im Vergleich“ stehen eine mit `.compare-card` gestaltete Karte
 
 Die Regeln `nav a` und `nav a:hover` treffen beim Darüberfahren denselben Link. `nav a:hover` gewinnt aufgrund der höheren Spezifität (0-1-2 gegenüber 0-0-2).
 
+## Online-Version
+
+GitHub Pages: https://faisonhd.github.io/FuelPredict/
+
+Die Veröffentlichung erfolgt automatisch über GitHub Actions nach einem Push auf `main`. Für die erstmalige Aktivierung muss unter **Settings → Pages → Build and deployment** die Quelle **GitHub Actions** ausgewählt sein.
+
+### Lokal und live prüfen
+
+Nach dem ersten erfolgreichen Deployment die lokale und die veröffentlichte Version nebeneinander öffnen und im Browser unter **DevTools → Network** auf fehlgeschlagene Requests prüfen. Drei konkrete Beobachtungen und ihre Ursachen hier ergänzen, sobald beide Versionen getestet wurden.
+
 ## Entwicklung
 
 ```bash
