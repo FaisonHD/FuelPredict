@@ -84,6 +84,22 @@ async function search(params) {
         + ' · ' + (Number(station.dist) || 0).toFixed(1).replace('.', ',') + ' km'
         + ' · ' + (station.isOpen ? 'Geöffnet' : 'Geschlossen');
       article.append(title, address, info);
+      const lat = Number(station.lat);
+      const lng = Number(station.lng);
+      if (station.lat != null && station.lng != null &&
+          Number.isFinite(lat) && Number.isFinite(lng) &&
+          lat >= 47 && lat <= 55.2 && lng >= 5.8 && lng <= 15.2) {
+        const directions = new URL('https://www.google.com/maps/dir/');
+        directions.searchParams.set('api', '1');
+        directions.searchParams.set('destination', lat + ',' + lng);
+        const link = document.createElement('a');
+        link.href = directions.toString();
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Route planen';
+        link.setAttribute('aria-label', 'Route zu ' + (station.name || station.brand || 'Tankstelle') + ' planen');
+        article.append(link);
+      }
       results.append(article);
     }
   } catch (error) {
