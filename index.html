@@ -24,6 +24,7 @@
       <select id="fuel-type" name="fuel-type"><option value="e5">Super E5</option><option value="e10">Super E10</option><option value="diesel">Diesel</option></select>
       <label for="radius">Suchradius</label>
       <select id="radius" name="radius"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="20">20 km</option><option value="25">25 km</option></select>
+      <label class="flex items-center gap-2" for="open-only"><input id="open-only" name="open-only" type="checkbox" class="w-auto"> Nur geöffnete Tankstellen anzeigen</label>
       <div class="actions"><button class="btn btn-primary" type="submit">Suchen</button><button class="btn btn-secondary" id="nearby-search" type="button">Meinen Standort verwenden</button><button class="btn btn-secondary" type="reset">Zurücksetzen</button></div>
     </form>
   </section>
@@ -50,27 +51,24 @@ const form = document.querySelector('#station-search');
 const status = document.querySelector('#search-status');
 const results = document.querySelector('#station-results');
 const nearbyButton = document.querySelector('#nearby-search');
+const openOnly = document.querySelector('#open-only');
+let loadedStations = [];
 let requestId = 0;
 
 function clearResults() {
   results.replaceChildren();
 }
 
-async function search(params) {
-  const id = ++requestId;
+function renderStations() {
   clearResults();
-  status.textContent = 'Tankstellen werden gesucht …';
-  const url = new URL('/api/stations', window.location.origin);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    if (id !== requestId) return;
-    if (!response.ok) throw new Error(data.error || 'Suche fehlgeschlagen.');
-    const stations = data.stations || [];
+  const stations = openOnly.checked ? loadedStations.filter(station => station.isOpen === true) : loadedStations;
+  if (openOnly.checked && loadedStations.length && !stations.length) {
+    status.textContent = 'Keine geöffneten Tankstellen gefunden. Filter deaktivieren, um alle anzuzeigen.';
+  } else {
     status.textContent = stations.length
-      ? stations.length + ' Tankstellen gefunden · Preise von Tankerkönig'
+      ? stations.length + (openOnly.checked ? ' geöffnete Tankstellen' : ' Tankstellen') + ' gefunden · Preise von Tankerkönig'
       : 'Keine Tankstellen im gewählten Radius gefunden.';
+  }
     for (const station of stations) {
       const article = document.createElement('article');
       article.className = 'station-item';
@@ -102,6 +100,22 @@ async function search(params) {
       }
       results.append(article);
     }
+}
+
+async function search(params) {
+  const id = ++requestId;
+  loadedStations = [];
+  clearResults();
+  status.textContent = 'Tankstellen werden gesucht …';
+  const url = new URL('/api/stations', window.location.origin);
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (id !== requestId) return;
+    if (!response.ok) throw new Error(data.error || 'Suche fehlgeschlagen.');
+    loadedStations = Array.isArray(data.stations) ? data.stations : [];
+    renderStations();
   } catch (error) {
     if (id === requestId) status.textContent = error.message;
   }
@@ -116,8 +130,13 @@ form.addEventListener('submit', event => {
 
 form.addEventListener('reset', () => {
   ++requestId;
+  loadedStations = [];
   clearResults();
   status.textContent = 'Noch keine Tankstellen geladen.';
+});
+
+openOnly.addEventListener('change', () => {
+  if (loadedStations.length) renderStations();
 });
 
 nearbyButton.addEventListener('click', () => {
