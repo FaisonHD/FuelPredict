@@ -25,6 +25,8 @@
       <label for="radius">Suchradius</label>
       <select id="radius" name="radius"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="20">20 km</option><option value="25">25 km</option></select>
       <label class="flex items-center gap-2" for="open-only"><input id="open-only" name="open-only" type="checkbox" class="w-auto"> Nur geöffnete Tankstellen anzeigen</label>
+      <label for="sort-by">Sortieren nach</label>
+      <select id="sort-by" name="sort-by"><option value="price">Günstigster Preis</option><option value="distance">Kürzeste Entfernung</option></select>
       <div class="actions"><button class="btn btn-primary" type="submit">Suchen</button><button class="btn btn-secondary" id="nearby-search" type="button">Meinen Standort verwenden</button><button class="btn btn-secondary" type="reset">Zurücksetzen</button></div>
     </form>
   </section>
@@ -52,6 +54,7 @@ const status = document.querySelector('#search-status');
 const results = document.querySelector('#station-results');
 const nearbyButton = document.querySelector('#nearby-search');
 const openOnly = document.querySelector('#open-only');
+const sortBy = document.querySelector('#sort-by');
 let loadedStations = [];
 let requestId = 0;
 
@@ -59,9 +62,24 @@ function clearResults() {
   results.replaceChildren();
 }
 
+function sortStations(stations, mode) {
+  const value = (station, field) => {
+    const raw = station[field];
+    const number = Number(raw);
+    return raw != null && raw !== '' && Number.isFinite(number) && number >= 0 && (field !== 'price' || number > 0)
+      ? number : Infinity;
+  };
+  return [...stations].sort((a, b) => {
+    const first = mode === 'distance' ? 'dist' : 'price';
+    const second = mode === 'distance' ? 'price' : 'dist';
+    return (value(a, first) - value(b, first)) || (value(a, second) - value(b, second)) || 0;
+  });
+}
+
 function renderStations() {
   clearResults();
-  const stations = openOnly.checked ? loadedStations.filter(station => station.isOpen === true) : loadedStations;
+  const filtered = openOnly.checked ? loadedStations.filter(station => station.isOpen === true) : loadedStations;
+  const stations = sortStations(filtered, sortBy.value);
   if (openOnly.checked && loadedStations.length && !stations.length) {
     status.textContent = 'Keine geöffneten Tankstellen gefunden. Filter deaktivieren, um alle anzuzeigen.';
   } else {
@@ -136,6 +154,10 @@ form.addEventListener('reset', () => {
 });
 
 openOnly.addEventListener('change', () => {
+  if (loadedStations.length) renderStations();
+});
+
+sortBy.addEventListener('change', () => {
   if (loadedStations.length) renderStations();
 });
 
