@@ -57,6 +57,7 @@ const openOnly = document.querySelector('#open-only');
 const sortBy = document.querySelector('#sort-by');
 let loadedStations = [];
 let requestId = 0;
+let locationRequestId = 0;
 
 function clearResults() {
   results.replaceChildren();
@@ -141,12 +142,14 @@ async function search(params) {
 
 form.addEventListener('submit', event => {
   event.preventDefault();
+  ++locationRequestId;
   const location = form.elements.location.value.trim();
   if (location.length < 2) return;
   search({ location, fuel: form.elements['fuel-type'].value, radius: form.elements.radius.value });
 });
 
 form.addEventListener('reset', () => {
+  ++locationRequestId;
   ++requestId;
   loadedStations = [];
   clearResults();
@@ -162,17 +165,25 @@ sortBy.addEventListener('change', () => {
 });
 
 nearbyButton.addEventListener('click', () => {
+  const locationId = ++locationRequestId;
   if (!navigator.geolocation) {
     status.textContent = 'Dein Browser unterstützt keine Standortbestimmung.';
     return;
   }
   status.textContent = 'Standort wird ermittelt …';
   navigator.geolocation.getCurrentPosition(
-    ({ coords }) => search({
-      lat: coords.latitude, lng: coords.longitude,
-      fuel: form.elements['fuel-type'].value, radius: form.elements.radius.value
-    }),
-    () => { status.textContent = 'Standort nicht verfügbar. Bitte einen Ort eingeben.'; },
+    ({ coords }) => {
+      if (locationId !== locationRequestId) return;
+      search({
+        lat: coords.latitude, lng: coords.longitude,
+        fuel: form.elements['fuel-type'].value, radius: form.elements.radius.value
+      });
+    },
+    () => {
+      if (locationId === locationRequestId) {
+        status.textContent = 'Standort nicht verfügbar. Bitte einen Ort eingeben.';
+      }
+    },
     { timeout: 10000, maximumAge: 60000 }
   );
 });
