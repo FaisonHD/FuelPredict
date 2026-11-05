@@ -2,6 +2,10 @@ const cache = new Map();
 const TTL = 65_000;
 let lastRequest = 0;
 
+function remainingSeconds(now = Date.now()) {
+  return Math.max(0, Math.ceil((60_000 - (now - lastRequest)) / 1000));
+}
+
 async function geocode(location) {
   if (/^\d{5}$/.test(location)) {
     const response = await fetch('https://api.zippopotam.us/de/' + location);
@@ -49,8 +53,13 @@ export default async function handler(req, res) {
     const cacheKey = [lat.toFixed(2), lng.toFixed(2), radius, fuel].join(':');
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.time < TTL) return res.status(200).json(cached.data);
-    if (Date.now() - lastRequest < 60_000) {
-      return res.status(429).json({ error: 'Tankerkönig erlaubt nur eine Anfrage pro Minute. Bitte kurz warten und erneut versuchen.' });
+    const wait = remainingSeconds();
+    if (wait > 0) {
+      res.setHeader('Retry-After', String(wait));
+      return res.status(429).json({
+        error: `Bitte noch ${wait} Sekunden warten, bevor du erneut suchst.`,
+        retryAfterSeconds: wait
+      });
     }
     lastRequest = Date.now();
     const url = new URL('https://creativecommons.tankerkoenig.de/json/list.php');
