@@ -1,4 +1,5 @@
 const cache = new Map();
+const inFlight = new Map();
 const TTL = 65_000;
 let lastRequest = 0;
 
@@ -53,6 +54,12 @@ export default async function handler(req, res) {
     const cacheKey = [lat.toFixed(2), lng.toFixed(2), radius, fuel].join(':');
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.time < TTL) return res.status(200).json(cached.data);
+    const pending = inFlight.get(cacheKey);
+    if (pending) {
+      const result = await pending;
+      res.setHeader('Cache-Control', 'public, s-maxage=65, stale-while-revalidate=30');
+      return res.status(200).json(result);
+    }
     const wait = remainingSeconds();
     if (wait > 0) {
       res.setHeader('Retry-After', String(wait));
@@ -62,24 +69,33 @@ export default async function handler(req, res) {
       });
     }
     lastRequest = Date.now();
-    const url = new URL('https://creativecommons.tankerkoenig.de/json/list.php');
-    for (const [name, value] of Object.entries({ lat, lng, rad: radius, sort: 'price', type: fuel, apikey: key })) {
-      url.searchParams.set(name, String(value));
+    const request = (async () => {
+      const url = new URL('https://creativecommons.tankerkoenig.de/json/list.php');
+      for (const [name, value] of Object.entries({ lat, lng, rad: radius, sort: 'price', type: fuel, apikey: key })) {
+        url.searchParams.set(name, String(value));
+      }
+      const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Tankerkönig konnte nicht abgefragt werden.');
+      const result = {
+        stations: (data.stations || []).map(s => ({
+          id: s.id, name: s.name, brand: s.brand, street: s.street, houseNumber: s.houseNumber,
+          postCode: s.postCode, place: s.place, dist: s.dist, price: s.price,
+          isOpen: s.isOpen, lat: s.lat, lng: s.lng
+        })),
+        fuel, radius, updatedAt: new Date().toISOString()
+      };
+      cache.set(cacheKey, { time: Date.now(), data: result });
+      return result;
+    })();
+    inFlight.set(cacheKey, request);
+    try {
+      const result = await request;
+      res.setHeader('Cache-Control', 'public, s-maxage=65, stale-while-revalidate=30');
+      return res.status(200).json(result);
+    } finally {
+      inFlight.delete(cacheKey);
     }
-    const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.message || 'Tankerkönig konnte nicht abgefragt werden.');
-    const result = {
-      stations: (data.stations || []).map(s => ({
-        id: s.id, name: s.name, brand: s.brand, street: s.street, houseNumber: s.houseNumber,
-        postCode: s.postCode, place: s.place, dist: s.dist, price: s.price,
-        isOpen: s.isOpen, lat: s.lat, lng: s.lng
-      })),
-      fuel, radius, updatedAt: new Date().toISOString()
-    };
-    cache.set(cacheKey, { time: Date.now(), data: result });
-    res.setHeader('Cache-Control', 'public, s-maxage=65, stale-while-revalidate=30');
-    return res.status(200).json(result);
   } catch (error) {
     return res.status(502).json({ error: error.message || 'Die Suche ist fehlgeschlagen.' });
   }
