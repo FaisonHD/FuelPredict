@@ -58,6 +58,34 @@ const sortBy = document.querySelector('#sort-by');
 let loadedStations = [];
 let requestId = 0;
 let locationRequestId = 0;
+let cooldownTimer = null;
+
+function stopCooldown() {
+  if (cooldownTimer !== null) {
+    clearInterval(cooldownTimer);
+    cooldownTimer = null;
+  }
+}
+
+function showCooldown(seconds, id) {
+  stopCooldown();
+  const deadline = Date.now() + seconds * 1000;
+  const update = () => {
+    if (id !== requestId) {
+      stopCooldown();
+      return;
+    }
+    const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    if (remaining === 0) {
+      stopCooldown();
+      status.textContent = 'Du kannst jetzt erneut nach Tankstellen suchen.';
+    } else {
+      status.textContent = `Bitte noch ${remaining} Sekunden warten, bevor du erneut suchst.`;
+    }
+  };
+  update();
+  if (Date.now() < deadline) cooldownTimer = setInterval(update, 1000);
+}
 
 function clearResults() {
   results.replaceChildren();
@@ -122,6 +150,7 @@ function renderStations() {
 }
 
 async function search(params) {
+  stopCooldown();
   const id = ++requestId;
   loadedStations = [];
   clearResults();
@@ -132,7 +161,16 @@ async function search(params) {
     const response = await fetch(url);
     const data = await response.json();
     if (id !== requestId) return;
-    if (!response.ok) throw new Error(data.error || 'Suche fehlgeschlagen.');
+    if (!response.ok) {
+      if (response.status === 429) {
+        const seconds = Number(data.retryAfterSeconds ?? response.headers.get('Retry-After'));
+        if (Number.isFinite(seconds) && seconds > 0) {
+          showCooldown(seconds, id);
+          return;
+        }
+      }
+      throw new Error(data.error || 'Suche fehlgeschlagen.');
+    }
     loadedStations = Array.isArray(data.stations) ? data.stations : [];
     renderStations();
   } catch (error) {
@@ -149,6 +187,7 @@ form.addEventListener('submit', event => {
 });
 
 form.addEventListener('reset', () => {
+  stopCooldown();
   ++locationRequestId;
   ++requestId;
   loadedStations = [];
