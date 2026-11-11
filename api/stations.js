@@ -7,7 +7,28 @@ function remainingSeconds(now = Date.now()) {
   return Math.max(0, Math.ceil((60_000 - (now - lastRequest)) / 1000));
 }
 
+const geocodeCache = new Map();
+const geocodeInFlight = new Map();
+const GEOCODE_TTL = 10 * 60_000;
+
 async function geocode(location) {
+  const normalized = location.trim().replace(/\s+/g, ' ').toLocaleLowerCase('de');
+  const cached = geocodeCache.get(normalized);
+  if (cached && Date.now() - cached.time < GEOCODE_TTL) return cached.coords;
+  const pending = geocodeInFlight.get(normalized);
+  if (pending) return pending;
+  const request = lookupLocation(location).then(coords => {
+    if (geocodeCache.size >= 100 && !geocodeCache.has(normalized)) {
+      geocodeCache.delete(geocodeCache.keys().next().value);
+    }
+    geocodeCache.set(normalized, { time: Date.now(), coords });
+    return coords;
+  }).finally(() => geocodeInFlight.delete(normalized));
+  geocodeInFlight.set(normalized, request);
+  return request;
+}
+
+async function lookupLocation(location) {
   if (/^\d{5}$/.test(location)) {
     const response = await fetch('https://api.zippopotam.us/de/' + location);
     if (response.ok) {
