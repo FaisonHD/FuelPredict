@@ -72,7 +72,7 @@ export default async function handler(req, res) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 47 || lat > 55.2 || lng < 5.8 || lng > 15.2) {
       return res.status(400).json({ error: 'Bitte einen Standort in Deutschland verwenden.' });
     }
-    const cacheKey = [lat.toFixed(2), lng.toFixed(2), radius, fuel].join(':');
+    const cacheKey = [lat.toFixed(4), lng.toFixed(4), radius, fuel].join(':');
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.time < TTL) return res.status(200).json(cached.data);
     const pending = inFlight.get(cacheKey);
