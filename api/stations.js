@@ -75,6 +75,7 @@ export default async function handler(req, res) {
     const cacheKey = [lat.toFixed(4), lng.toFixed(4), radius, fuel].join(':');
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.time < TTL) return res.status(200).json(cached.data);
+    if (cached) cache.delete(cacheKey);
     const pending = inFlight.get(cacheKey);
     if (pending) {
       const result = await pending;
@@ -106,7 +107,13 @@ export default async function handler(req, res) {
         })),
         fuel, radius, updatedAt: new Date().toISOString()
       };
-      cache.set(cacheKey, { time: Date.now(), data: result });
+      // Remove expired results and cap memory use on long-lived instances.
+      const now = Date.now();
+      for (const [key, entry] of cache) {
+        if (now - entry.time >= TTL) cache.delete(key);
+      }
+      if (!cache.has(cacheKey) && cache.size >= 100) cache.delete(cache.keys().next().value);
+      cache.set(cacheKey, { time: now, data: result });
       return result;
     })();
     inFlight.set(cacheKey, request);
