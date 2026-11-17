@@ -13,8 +13,13 @@ const GEOCODE_TTL = 10 * 60_000;
 
 async function geocode(location) {
   const normalized = location.trim().replace(/\s+/g, ' ').toLocaleLowerCase('de');
+  const now = Date.now();
+  // Expire old locations on every lookup, even when the cache is not full.
+  for (const [name, entry] of geocodeCache) {
+    if (now - entry.time >= GEOCODE_TTL) geocodeCache.delete(name);
+  }
   const cached = geocodeCache.get(normalized);
-  if (cached && Date.now() - cached.time < GEOCODE_TTL) return cached.coords;
+  if (cached) return cached.coords;
   const pending = geocodeInFlight.get(normalized);
   if (pending) return pending;
   const request = lookupLocation(location).then(coords => {
