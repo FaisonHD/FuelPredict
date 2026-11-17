@@ -105,3 +105,8 @@ npm run build
 ```
 
 Vite erstellt beim Build den Ordner `dist/` mit den für die Veröffentlichung benötigten Dateien. `node_modules/` und `dist/` sind in `.gitignore` eingetragen. Die Styles werden mit Tailwind CSS 4 und dem Vite-Plugin erzeugt; nur verwendete Utility-Klassen werden in die gebaute CSS-Datei übernommen.
+
+## KI-Log
+
+- 17.11.2026 – ChatGPT: Abgleich mit Übungsblatt 5 und 6, Auslagerung der Suchlogik und Speicherung der Filtereinstellungen. Die Änderungen wurden im Repository überprüft, ein Browser-Test steht noch aus.
+- 17.11.2026 – ChatGPT stufte das Deployment zunächst als erledigt ein. Beim Lesen des Quellcodes fiel auf, dass `/api/stations` serverseitig ausgeführt werden muss und GitHub Pages dies nicht unterstützt. Die Bewertung gilt deshalb nur für die statische Oberfläche, nicht für die gesamte Anwendung.
