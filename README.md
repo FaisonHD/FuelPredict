@@ -2,6 +2,13 @@
 
 FuelPredict ist eine Webanwendung zum Vergleichen von Tankstellenpreisen. Über Ort, Kraftstoffart und Suchradius lassen sich Tankstellen suchen. Geplant sind außerdem Preisverläufe und Prognosen zur Preisentwicklung.
 
+## Funktionen
+
+- Tankstellen nach Ort oder aktuellem Standort suchen.
+- Kraftstoff und Suchradius auswählen.
+- Ergebnisse nach Preis oder Entfernung sortieren.
+- Nach geöffneten Tankstellen filtern und eine Route öffnen.
+
 ## Projekt
 
 - **Team:** Einzelprojekt
@@ -81,7 +88,14 @@ Im Network-Tab waren beim dokumentierten Seitenaufruf keine HTTP-Fehler (4xx ode
 
 ### Lokal und live prüfen
 
-Der Live-Test bestätigt, dass HTML, JavaScript und CSS unter dem GitHub-Pages-Projektpfad geladen werden.
+Der dokumentierte Live-Test bestätigt, dass HTML, JavaScript und CSS unter dem GitHub-Pages-Projektpfad geladen werden.
+
+- Vite baut die Dateien nach `dist/`; produktive Dateien werden über den Projektpfad ausgeliefert.
+- GitHub Actions veröffentlicht den Build statt des Quellordners.
+- Die Tankstellensuche benötigt zusätzlich das serverseitige `/api/stations`-Backend; GitHub Pages allein kann dieses nicht ausführen.
+
+Ein eigener Server ist nötig, wenn geheime API-Schlüssel oder serverseitige Verarbeitung benötigt werden. GitHub Pages reicht für statische HTML-, CSS- und JavaScript-Dateien.
+
 ## Entwicklung
 
 ```bash
